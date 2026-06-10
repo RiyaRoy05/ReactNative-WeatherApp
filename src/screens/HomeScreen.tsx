@@ -1,75 +1,192 @@
-import { StyleSheet, View, Text, Image, ScrollView } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 
 const HomeScreen = () => {
-    
+  const [city, setCity] = React.useState('');
+  const [weather, setWeather] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+
+  const handleSearch = async () => {
+    if (!city.trim()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=65ce43146e4b6a1d679f11380bea28ce&units=metric`,
+      );
+
+      const data = await response.json();
+
+      console.log(data);
+
+      if (data.cod === 200) {
+        setWeather(data);
+        setCity('');
+      } else {
+        console.log('City not found');
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getWeatherImage = () => {
+    if (!weather) {
+      return require('../assets/images/weather/cloud.png');
+    }
+
+    const condition = weather.weather[0].main;
+
+    switch (condition) {
+      case 'Clear':
+        return require('../assets/images/weather/sun.png');
+
+      case 'Rain':
+        return require('../assets/images/weather/rain.png');
+
+      case 'Thunderstorm':
+        return require('../assets/images/weather/thunder.png');
+
+      case 'Clouds':
+        return require('../assets/images/weather/cloud.png');
+
+      default:
+        return require('../assets/images/weather/cloud.png');
+    }
+  };
+
   return (
     <LinearGradient
       colors={['#08203E', '#1B4F9C', '#5B8FD9']}
       style={styles.container}
     >
-        <SafeAreaView style={styles.safeArea}>
-            <View style={styles.content}>
-                <View style={styles.header}>
-                    <Text style={styles.location}>Amsterdem</Text>
-                    <Text style={styles.menu}>☰</Text>
-                </View>
-                <View style={styles.tempratureContainer}>
-                    <Text style={styles.temprature}>25°C</Text>
-                </View>
-                <View style={styles.imageContainer}>
-                    <Image
-                        source={require('../assets/images/weather/cloud.png')}
-                        style={styles.weatherImager}
-                        resizeMode='contain'
-                    />
-                </View>
-                <View style={styles.weatherInfo}>
-                    <Text style={styles.cityName}>Amsterdem</Text>
-                    <Text style={styles.minMax}>16° - 26°</Text>
-                    <Text style={styles.condition}>Partly Cloudy</Text>
-                </View>
-                <View style={styles.detailsContainer}>
-                    <View style={styles.detailItem}>
-                        <Text style={styles.derailTitle}>Humidity</Text>
-                        <Text style={styles.detailValue}>94%</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <Text style={styles.derailTitle}>Wind</Text>
-                        <Text style={styles.detailValue}>7 km/h</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <Text style={styles.derailTitle}>Precipitation</Text>
-                        <Text style={styles.detailValue}>30%</Text>
-                    </View>
-                </View>
-                <View style={styles.forecastCard}>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                    >
-                        <View style={styles.forecastItem}>
-                            <Text style={styles.forecastTime}>Now</Text>
-                            <Text style={styles.forecastTemp}>25°</Text>
-                        </View>
-                        <View style={styles.forecastItem}>
-                            <Text style={styles.forecastTime}>10am</Text>
-                            <Text style={styles.forecastTemp}>22°</Text>
-                        </View>
-                        <View style={styles.forecastItem}>
-                            <Text style={styles.forecastTime}>11am</Text>
-                            <Text style={styles.forecastTemp}>23°</Text>
-                        </View>
-                        <View style={styles.forecastItem}>
-                            <Text style={styles.forecastTime}>12pm</Text>
-                            <Text style={styles.forecastTemp}>24°</Text>
-                        </View>
-                    </ScrollView>
-                </View>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.content}
+        >
+          {/* <View style={styles.header}>
+            <Text style={styles.location}>Amsterdem</Text>
+            <Text style={styles.menu}>☰</Text>
+          </View> */}
+          <View style={styles.searchContainer}>
+            <TextInput
+              placeholder="Search City..."
+              placeholderTextColor="#D6E3F5"
+              value={city}
+              onChangeText={setCity}
+              style={styles.searchInput}
+            />
+            <Text style={styles.SearchButton} onPress={handleSearch}>
+              {loading ? 'Loading...' : 'Search'}
+            </Text>
+          </View>
+          <View style={styles.tempratureContainer}>
+            <Text style={styles.temprature}>
+              {weather ? Math.round(weather.main.temp) : 25}°C
+            </Text>
+          </View>
+          <View style={styles.imageContainer}>
+            <Image
+              source={getWeatherImage()}
+              style={styles.weatherImager}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.weatherInfo}>
+            <Text style={styles.cityName}>
+              {weather ? weather.name : 'Amsterdam'}
+            </Text>
+            <Text style={styles.minMax}>
+              {weather
+                ? `${Math.round(weather.main.temp_min)}° - ${Math.round(
+                    weather.main.temp_max,
+                  )}°`
+                : '16° - 26°'}
+            </Text>
+            <Text style={styles.condition}>
+              {weather ? weather.weather[0].main : 'Partly Cloudy'}
+            </Text>
+          </View>
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailItem}>
+              <Text style={styles.derailTitle}>Humidity</Text>
+              <Text style={styles.detailValue}>
+                {weather ? weather.main.humidity : 94}%
+              </Text>
             </View>
-        </SafeAreaView>
+            <View style={styles.detailItem}>
+              <Text style={styles.derailTitle}>Wind</Text>
+              <Text style={styles.detailValue}>
+                {weather ? weather.wind.speed : 7} km/h
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.derailTitle}>Precipitation</Text>
+              <Text style={styles.detailValue}>30%</Text>
+            </View>
+          </View>
+          <View style={styles.forecastCard}>
+            <Text style={styles.CardTitle}>Additional Details</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Latitude</Text>
+              <Text style={styles.infoValue}>
+                {weather?.coord?.lat ?? '__'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Longitude</Text>
+              <Text style={styles.infoValue}>
+                {weather?.coord?.lon ?? '__'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Feels Like</Text>
+              <Text style={styles.infoValue}>
+                {weather ? `${Math.round(weather.main.feels_like)}°C` : '__'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Pressure</Text>
+              <Text style={styles.infoValue}>
+                {weather?.main?.pressure ?? '--'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Visibility</Text>
+              <Text style={styles.infoValue}>
+                {weather?.visibility ?? '__'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Country</Text>
+              <Text style={styles.infoValue}>
+                {weather?.sys?.country ?? '__'}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>TimeZone</Text>
+              <Text style={styles.infoValue}>
+                {weather ? weather.timezone / 3600 : '__'}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </LinearGradient>
   );
 };
@@ -81,11 +198,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safeArea: {
-    flex: 1
+    flex: 1,
   },
   content: {
-    flex: 1,
     paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
@@ -93,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  location:{
+  location: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
@@ -104,16 +221,16 @@ const styles = StyleSheet.create({
   },
   tempratureContainer: {
     marginTop: 50,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   temprature: {
     fontSize: 96,
     fontWeight: '300',
-    color: '#FFFFFF'
+    color: '#FFFFFF',
   },
   imageContainer: {
     alignItems: 'center',
-    marginTop: -20
+    marginTop: -20,
   },
   weatherImager: {
     width: 320,
@@ -126,7 +243,7 @@ const styles = StyleSheet.create({
   cityName: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#FFFFFF'
+    color: '#FFFFFF',
   },
   minMax: {
     fontSize: 26,
@@ -137,7 +254,7 @@ const styles = StyleSheet.create({
   condition: {
     fontSize: 18,
     color: '#D6E3F5',
-    marginTop: 8
+    marginTop: 8,
   },
   detailsContainer: {
     flexDirection: 'row',
@@ -146,7 +263,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   detailItem: {
-    alignItems: 'center'
+    alignItems: 'center',
   },
   derailTitle: {
     color: '#D6E3F5',
@@ -159,14 +276,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   forecastCard: {
-    backgroundColor: '(rgba(225,225,225,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     marginTop: 20,
     borderRadius: 30,
-    padding: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
   },
   forecastItem: {
     alignItems: 'center',
-    marginRight: 25,
+    justifyContent: 'center',
+    marginRight: 40,
   },
   forecastTime: {
     color: '#D6E3F5',
@@ -177,5 +296,53 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginTop: 8,
-  }
+  },
+  forecastIcon: {
+    width: 28,
+    height: 28,
+    marginVertical: 8,
+  },
+  searchContainer: {
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: 'rgba(225,225,225,0.15)',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    height: 50,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  SearchButton: {
+    marginLeft: 10,
+    backgroundColor: 'rgba(225,225,225,0.20)',
+    color: '#FFFFFF',
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    borderRadius: 15,
+    fontWeight: '600',
+  },
+  CardTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  infoLabel: {
+    color: '#D6E3F5',
+    fontSize: 16,
+  },
+  infoValue: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
